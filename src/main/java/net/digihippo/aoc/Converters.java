@@ -6,5 +6,10 @@ public final class Converters {
         return b - '0';
     }
 
+    static int fromAsciiChar(char b)
+    {
+        return b - '0';
+    }
+
     private Converters() {}
 }
