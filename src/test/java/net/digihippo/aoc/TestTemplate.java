@@ -15,6 +15,20 @@ public abstract class TestTemplate<T1, T2> {
     protected TestTemplate(
             SolutionTemplate<T1, T2> solution,
             String exampleInput,
+            T1 exampleOneAnswer,
+            T2 exampleTwoAnswer,
+            String puzzleFileName) {
+        this.solution = solution;
+        this.exampleInput = exampleInput;
+        this.exampleTwoInput = exampleInput;
+        this.exampleOneAnswer = exampleOneAnswer;
+        this.exampleTwoAnswer = exampleTwoAnswer;
+        this.puzzleFileName = puzzleFileName;
+    }
+
+    protected TestTemplate(
+            SolutionTemplate<T1, T2> solution,
+            String exampleInput,
             String exampleTwoInput,
             T1 exampleOneAnswer,
             T2 exampleTwoAnswer,
