@@ -23,7 +23,7 @@ public class One extends SolutionTemplate<Integer, Integer> {
                 int last = -1;
                 for (byte b : s.getBytes(StandardCharsets.US_ASCII)) {
                     if ('0' <= b && b <= '9') {
-                        int num = b - (byte) '0';
+                        int num = Converters.fromAsciiByte(b);
                         if (first == -1) {
                             first = num;
                         }
