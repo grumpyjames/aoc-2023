@@ -15,6 +15,6 @@ class ThreeTest extends TestTemplate<Integer, Integer> {
             """;
 
     public ThreeTest() {
-        super(new Three(), EXAMPLE_INPUT, 4361, 31, "three.txt");
+        super(new Three(), EXAMPLE_INPUT, 4361, 467835, "three.txt");
     }
 }
