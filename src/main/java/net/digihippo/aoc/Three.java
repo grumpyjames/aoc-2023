@@ -14,43 +14,51 @@ public class Three extends SolutionTemplate<Integer, Integer> {
 
             @Override
             public Integer result() {
+                final Grid g = new Grid(grid);
+
                 final List<Integer> nope = new ArrayList<>();
                 final List<Integer> partNumbers = new ArrayList<>();
 
-                for (int i = 0; i < grid.size(); i++) {
-                    String row = grid.get(i);
-                    byte[] bytes = row.getBytes(StandardCharsets.US_ASCII);
+                g.visitRows(new Grid.RowVisitor() {
                     int start = -1;
                     int end = -1;
 
+                    @Override
+                    public void rowStarted(int y) {
 
-                    for (int j = 0; j < bytes.length; j++) {
-                        byte b = bytes[j];
-                        if ('0' <= b && b <= '9')
+                    }
+
+                    @Override
+                    public void rowDone(int y) {
+                        maybeRunNeighbourAnalysis(y);
+                    }
+
+                    private void maybeRunNeighbourAnalysis(int y) {
+                        if (start != -1) {
+                            processGroup(nope, partNumbers, g, y, start, end);
+
+                            start = -1;
+                            end = -1;
+                        }
+                    }
+
+                    @Override
+                    public void onCell(int x, int y, char content) {
+                        if ('0' <= content && content <= '9')
                         {
                             if (start == -1)
                             {
-                                start = j;
+                                start = x;
                             }
 
-                            end = j;
+                            end = x;
                         }
                         else
                         {
-                            if (start != -1) {
-                                processGroup(nope, partNumbers, i, row, start, end);
-
-                                start = -1;
-                                end = -1;
-                            }
+                            maybeRunNeighbourAnalysis(y);
                         }
                     }
-
-                    if (start != -1)
-                    {
-                        processGroup(nope, partNumbers, i, row, start, end);
-                    }
-                }
+                });
 
                 int result = 0;
                 for (int partNumber : partNumbers) {
@@ -60,20 +68,14 @@ public class Three extends SolutionTemplate<Integer, Integer> {
                 return result;
             }
 
-            private void processGroup(List<Integer> nope, List<Integer> partNumbers, int i, String row, int start, int end) {
-                boolean noSymbols = true;
-                for (int x = start - 1; x <= end + 1; x++) {
-                    for (int y = -1; y <= 1; y++) {
-                        if (inGrid(x, y + i, grid) && symbolic(x, y + i, grid)) {
-                            noSymbols = false;
-                        }
-                    }
-                }
+            private void processGroup(List<Integer> nope, List<Integer> partNumbers, Grid g, int y, int start, int end) {
+                SymbolVisitor v = new SymbolVisitor();
+                g.visitNeighboursOfXRange(start, end, y, v);
 
-                if (noSymbols) {
-                    nope.add(Integer.parseInt(row.substring(start, end + 1)));
+                if (v.noSymbols) {
+                    nope.add(Integer.parseInt(g.substring(start, end + 1, y)));
                 } else {
-                    partNumbers.add(Integer.parseInt(row.substring(start, end + 1)));
+                    partNumbers.add(Integer.parseInt(g.substring(start, end + 1, y)));
                 }
             }
 
@@ -84,8 +86,7 @@ public class Three extends SolutionTemplate<Integer, Integer> {
         };
     }
 
-    private boolean symbolic(int x, int y, List<String> grid) {
-        char c = grid.get(y).charAt(x);
+    private boolean symbolic(char c) {
         return c != '.' && (c < '0' || c > '9');
     }
 
@@ -168,5 +169,16 @@ public class Three extends SolutionTemplate<Integer, Integer> {
                 grid.add(s);
             }
         };
+    }
+
+    private class SymbolVisitor implements Grid.Visitor {
+        boolean noSymbols = true;
+
+        @Override
+        public void onCell(int x, int y, char content) {
+            if (symbolic(content)) {
+                noSymbols = false;
+            }
+        }
     }
 }
