@@ -1,6 +1,5 @@
 package net.digihippo.aoc;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -90,15 +89,6 @@ public class Three extends SolutionTemplate<Integer, Integer> {
         return c != '.' && (c < '0' || c > '9');
     }
 
-    private boolean gear(int x, int y, List<String> grid) {
-        return '*' == grid.get(y).charAt(x);
-    }
-
-    private boolean inGrid(int x, int y, List<String> grid) {
-        return (0 <= y && y < grid.size()) && (0 <= x && x < grid.get(0).length());
-    }
-
-
     @Override
     Solution<Integer> partTwo() {
         return new Solution<>() {
@@ -106,35 +96,45 @@ public class Three extends SolutionTemplate<Integer, Integer> {
 
             @Override
             public Integer result() {
-                for (int i = 0; i < grid.size(); i++) {
-                    String row = grid.get(i);
-                    byte[] bytes = row.getBytes(StandardCharsets.US_ASCII);
+                final Grid g = new Grid(grid);
+
+                g.visitRows(new Grid.RowVisitor() {
                     int start = -1;
                     int end = -1;
 
+                    @Override
+                    public void rowStarted(int y) {
 
-                    for (int j = 0; j < bytes.length; j++) {
-                        byte b = bytes[j];
+                    }
+
+                    @Override
+                    public void rowDone(int y) {
+                        if (start != -1) {
+                            processGroup(g, y, start, end);
+
+                            start = -1;
+                            end = -1;
+                        }
+                    }
+
+                    @Override
+                    public void onCell(int x, int y, char b) {
                         if ('0' <= b && b <= '9') {
                             if (start == -1) {
-                                start = j;
+                                start = x;
                             }
 
-                            end = j;
+                            end = x;
                         } else {
                             if (start != -1) {
-                                processGroup(i, row, start, end);
+                                processGroup(g, y, start, end);
 
                                 start = -1;
                                 end = -1;
                             }
                         }
                     }
-
-                    if (start != -1) {
-                        processGroup(i, row, start, end);
-                    }
-                }
+                });
 
                 int gearRatio = 0;
                 for (Map.Entry<TwoDPoint, List<Integer>> entry : gears.entrySet()) {
@@ -149,19 +149,16 @@ public class Three extends SolutionTemplate<Integer, Integer> {
             private final Map<TwoDPoint, List<Integer>> gears = new HashMap<>();
 
 
-            private void processGroup(int i, String row, int start, int end) {
-                int part = Integer.parseInt(row.substring(start, end + 1));
+            private void processGroup(Grid g, int y, int start, int end) {
+                int part = Integer.parseInt(g.substring(start, end + 1, y));
 
-                for (int x = start - 1; x <= end + 1; x++) {
-                    for (int yOff = -1; yOff <= 1; yOff++) {
-                        int y = yOff + i;
-                        if (inGrid(x, y, grid) && gear(x, y, grid)) {
-                            TwoDPoint gearPoint = new TwoDPoint(x, y);
-                            gears.putIfAbsent(gearPoint, new ArrayList<>());
-                            gears.get(gearPoint).add(part);
-                        }
+                g.visitNeighboursOfXRange(start, end, y, (x, y1, content) -> {
+                    if (content == '*') {
+                        TwoDPoint gearPoint = new TwoDPoint(x, y1);
+                        gears.putIfAbsent(gearPoint, new ArrayList<>());
+                        gears.get(gearPoint).add(part);
                     }
-                }
+                });
             }
 
             @Override
