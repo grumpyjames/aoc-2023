@@ -2,7 +2,7 @@ package net.digihippo.aoc;
 
 import java.util.*;
 
-public class Eleven extends SolutionTemplate<Long, Long> {
+public class Eleven extends GridSolution<Long> {
     private record PointPair(TwoDPoint first, TwoDPoint second) {
         private static PointPair ofPair(final TwoDPoint one, final TwoDPoint two) {
             if (one.x() < two.x()) {
@@ -19,9 +19,7 @@ public class Eleven extends SolutionTemplate<Long, Long> {
         }
     }
 
-    private static Long doThing(List<String> rows, long expansionFactor) {
-        Grid g = new Grid(rows);
-
+    private static Long doThing(Grid g, long expansionFactor) {
         List<Integer> columnIndexes = g.findEmptyColumns('.');
         List<Integer> rowIndexes = g.findEmptyRows('.');
         // expand the universe
@@ -71,37 +69,13 @@ public class Eleven extends SolutionTemplate<Long, Long> {
 
 
     @Override
-    Solution<Long> partOne() {
-        return new Solution<>() {
-            final List<String> rows = new ArrayList<>();
-
-            @Override
-            public Long result() {
-                return doThing(rows, 1);
-            }
-
-            @Override
-            public void accept(String s) {
-                rows.add(s);
-            }
-        };
+    Long partOne(Grid g) {
+        return doThing(g, 1);
     }
 
     @Override
-    Solution<Long> partTwo() {
-        return new Solution<>() {
-            private final List<String> rows = new ArrayList<>();
-
-            @Override
-            public Long result() {
-                // it's _really_ not clear to me why this is not 1_000_000
-                return doThing(rows, 999_999);
-            }
-
-            @Override
-            public void accept(String s) {
-                rows.add(s);
-            }
-        };
+    Long partTwo(Grid g) {
+        // it's _really_ not clear to me why this is not 1_000_000
+        return doThing(g, 999_999);
     }
 }
