@@ -8,7 +8,9 @@ public class Ten extends GridSolution<Integer> {
 
     @Override
     Integer partOne(Grid g) {
-        final Map<TwoDPoint, Integer> distances = computeConnectedDistances(g, computeStartPoint(g));
+        TwoDPoint start = computeStartPoint(g);
+        final Map<TwoDPoint, Integer> distances =
+                computeConnectedDistances(g, start, computeConnections(g, start, 'S'));
 
         int max = 0;
         for (Map.Entry<TwoDPoint, Integer> entry : distances.entrySet()) {
@@ -20,9 +22,10 @@ public class Ten extends GridSolution<Integer> {
         return max;
     }
 
-    private static Map<TwoDPoint, Integer> computeConnectedDistances(Grid g, TwoDPoint start) {
-
-        final List<Connection> connections = computeConnections(g, start, 'S');
+    private static Map<TwoDPoint, Integer> computeConnectedDistances(
+            Grid g,
+            TwoDPoint start,
+            List<Connection> connections) {
 
         final Set<TwoDPoint> visited = new HashSet<>();
         visited.add(start);
@@ -48,6 +51,7 @@ public class Ten extends GridSolution<Integer> {
                 }
             }
         }
+
         return distances;
     }
 
@@ -105,100 +109,111 @@ public class Ten extends GridSolution<Integer> {
                 }
             }
         });
+
         return connections;
     }
 
     @Override
     Integer partTwo(Grid g) {
         final TwoDPoint start = computeStartPoint(g);
-        final Map<TwoDPoint, Integer> distances = computeConnectedDistances(g, start);
-
         final List<Connection> connections = computeConnections(g, start, 'S');
+        final Map<TwoDPoint, Integer> distances = computeConnectedDistances(g, start, connections);
 
-        PointPair top = PointPair.ofPair(start, start.plus(new TwoDPoint(1, 0)));
-        PointPair left = PointPair.ofPair(start, start.plus(new TwoDPoint(0, 1)));
-        PointPair right = PointPair.ofPair(start.plus(new TwoDPoint(1, 0)), start.plus(new TwoDPoint(1, 1)));
-        PointPair bottom = PointPair.ofPair(start.plus(new TwoDPoint(0, 1)), start.plus(new TwoDPoint(1, 1)));
+        final Set<PointPair> unconnected = computeUnconnectedEdges(g, start, connections, distances);
+
+        final Set<TwoDPoint> vertices = g.vertexSet();
+        final Set<TwoDPoint> outside = computeOutsideVertices(unconnected, vertices);
+        final Set<TwoDPoint> insideCells = computeInsideCells(g, outside);
+
+        return insideCells.size();
+    }
+
+    private static Set<PointPair> computeUnconnectedEdges(
+            Grid g,
+            TwoDPoint start,
+            List<Connection> connections,
+            Map<TwoDPoint, Integer> distances) {
 
         final Set<PointPair> unconnected = new HashSet<>();
-        connections.forEach(c -> {
-            switch (c.offset) {
-                case Up -> unconnected.add(top);
-                case Down -> unconnected.add(bottom);
-                case Left -> unconnected.add(left);
-                case Right -> unconnected.add(right);
-            }
-        });
+        addStartEdges(start, connections, unconnected);
 
         distances.keySet().forEach(topLeft -> {
             char content = g.at(topLeft.x(), topLeft.y());
+            final Set<PointPair> notConnected = new HashSet<>();
+            final PointPair.Edges edges = PointPair.computeEdges(topLeft);
 
+            notConnected.add(edges.top());
+            notConnected.add(edges.left());
+            notConnected.add(edges.right());
+            notConnected.add(edges.bottom());
+
+            switch (content) {
+                case '|' -> {
+                    notConnected.remove(edges.left());
+                    notConnected.remove(edges.right());
+                }
+                case '-' -> {
+                    notConnected.remove(edges.top());
+                    notConnected.remove(edges.bottom());
+                }
+                case 'J' -> {
+                    notConnected.remove(edges.right());
+                    notConnected.remove(edges.bottom());
+                }
+                case 'F' -> {
+                    notConnected.remove(edges.top());
+                    notConnected.remove(edges.left());
+                }
+                case 'L' -> {
+                    notConnected.remove(edges.left());
+                    notConnected.remove(edges.bottom());
+                }
+                case '7' -> {
+                    notConnected.remove(edges.top());
+                    notConnected.remove(edges.right());
+                }
+                case 'S' ->
+                    // managed previously
+                    notConnected.clear();
+            }
+
+            unconnected.addAll(notConnected);
+        });
+
+        return unconnected;
+    }
+
+    private static void addStartEdges(TwoDPoint start, List<Connection> connections, Set<PointPair> unconnected) {
+        final PointPair.Edges startEdges = PointPair.computeEdges(start);
+        connections.forEach(c -> {
+            switch (c.offset) {
+                case Up -> unconnected.add(startEdges.top());
+                case Down -> unconnected.add(startEdges.bottom());
+                case Left -> unconnected.add(startEdges.left());
+                case Right -> unconnected.add(startEdges.right());
+            }
+        });
+    }
+
+    private static Set<TwoDPoint> computeInsideCells(Grid g, Set<TwoDPoint> outside) {
+        final Set<TwoDPoint> insideCells = new HashSet<>();
+        g.visit((x, y, content) -> {
+            TwoDPoint topLeft = new TwoDPoint(x, y);
             TwoDPoint bottomLeft = topLeft.plus(new TwoDPoint(0, 1));
             TwoDPoint topRight = topLeft.plus(new TwoDPoint(1, 0));
             TwoDPoint bottomRight = topLeft.plus(new TwoDPoint(1, 1));
 
-            final Set<PointPair> notConnected = new HashSet<>();
-            notConnected.add(PointPair.ofPair(topLeft, bottomLeft));
-            notConnected.add(PointPair.ofPair(topLeft, topRight));
-            notConnected.add(PointPair.ofPair(topRight, bottomRight));
-            notConnected.add(PointPair.ofPair(bottomLeft, bottomRight));
+            List<TwoDPoint> cellVertices = List.of(
+                    topLeft, bottomLeft, topRight, bottomRight);
 
-            switch (content) {
-                case '|':
-                    notConnected.remove(PointPair.ofPair(topLeft, bottomLeft));
-                    notConnected.remove(PointPair.ofPair(topRight, bottomRight));
-                    break;
-                case '-':
-                    notConnected.remove(PointPair.ofPair(topLeft, topRight));
-                    notConnected.remove(PointPair.ofPair(bottomLeft, bottomRight));
-                    break;
-                case 'J':
-                    notConnected.remove(PointPair.ofPair(topRight, bottomRight));
-                    notConnected.remove(PointPair.ofPair(bottomLeft, bottomRight));
-                    break;
-                case 'F':
-                    notConnected.remove(PointPair.ofPair(topLeft, topRight));
-                    notConnected.remove(PointPair.ofPair(topLeft, bottomLeft));
-                    break;
-                case 'L':
-                    notConnected.remove(PointPair.ofPair(topLeft, bottomLeft));
-                    notConnected.remove(PointPair.ofPair(bottomLeft, bottomRight));
-                    break;
-                case '7':
-                    notConnected.remove(PointPair.ofPair(topLeft, topRight));
-                    notConnected.remove(PointPair.ofPair(topRight, bottomRight));
-                    break;
-                case 'S':
-                    // already done, leave it
-                    break;
-            }
-
-            if (content != 'S') {
-                unconnected.addAll(notConnected);
+            if (cellVertices.stream().noneMatch(outside::contains)) {
+                insideCells.add(topLeft);
             }
         });
+        return insideCells;
+    }
 
-        final Set<TwoDPoint> vertices = new HashSet<>();
-        g.visitRows(new Grid.RowVisitor() {
-            @Override
-            public void rowStarted(int y) {
-
-            }
-
-            @Override
-            public void rowDone(int y) {
-
-            }
-
-            @Override
-            public void onCell(int x, int y, char content) {
-                vertices.add(new TwoDPoint(x, y));
-                vertices.add(new TwoDPoint(x + 1, y));
-                vertices.add(new TwoDPoint(x + 1, y + 1));
-                vertices.add(new TwoDPoint(x, y + 1));
-            }
-        });
-
+    private static Set<TwoDPoint> computeOutsideVertices(Set<PointPair> unconnected, Set<TwoDPoint> vertices) {
         final Set<TwoDPoint> outside = new HashSet<>();
         final Queue<TwoDPoint> toProcess = new ArrayDeque<>();
         toProcess.add(new TwoDPoint(0, 0));
@@ -219,36 +234,6 @@ public class Ten extends GridSolution<Integer> {
                 }
             }
         }
-
-        final Set<TwoDPoint> insideCells = new HashSet<>();
-        g.visitRows(new Grid.RowVisitor() {
-            @Override
-            public void rowStarted(int y) {
-
-            }
-
-            @Override
-            public void rowDone(int y) {
-
-            }
-
-            @Override
-            public void onCell(int x, int y, char content) {
-                TwoDPoint topLeft = new TwoDPoint(x, y);
-                TwoDPoint bottomLeft = topLeft.plus(new TwoDPoint(0, 1));
-                TwoDPoint topRight = topLeft.plus(new TwoDPoint(1, 0));
-                TwoDPoint bottomRight = topLeft.plus(new TwoDPoint(1, 1));
-
-                List<TwoDPoint> vertices = List.of(
-                        topLeft, bottomLeft, topRight, bottomRight);
-
-                boolean o = vertices.stream().anyMatch(outside::contains);
-                if (!o) {
-                    insideCells.add(topLeft);
-                }
-            }
-        });
-
-        return insideCells.size();
+        return outside;
     }
 }

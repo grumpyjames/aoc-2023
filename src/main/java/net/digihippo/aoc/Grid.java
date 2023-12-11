@@ -1,7 +1,9 @@
 package net.digihippo.aoc;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Grid {
     private final List<String> lines;
@@ -80,6 +82,17 @@ public class Grid {
         }
     }
 
+    Set<TwoDPoint> vertexSet() {
+        final Set<TwoDPoint> vertices = new HashSet<>();
+        visit((x, y, content) -> {
+            vertices.add(new TwoDPoint(x, y));
+            vertices.add(new TwoDPoint(x + 1, y));
+            vertices.add(new TwoDPoint(x + 1, y + 1));
+            vertices.add(new TwoDPoint(x, y + 1));
+        });
+        return vertices;
+    }
+
     interface CharPredicate
     {
         boolean matches(char c);
@@ -105,7 +118,26 @@ public class Grid {
         void rowDone(int y);
     }
 
-    void visitRows(RowVisitor v) {
+    void visit(Visitor v) {
+        visit(new RowVisitor() {
+            @Override
+            public void rowStarted(int y) {
+
+            }
+
+            @Override
+            public void rowDone(int y) {
+
+            }
+
+            @Override
+            public void onCell(int x, int y, char content) {
+                v.onCell(x, y, content);
+            }
+        });
+    }
+
+    void visit(RowVisitor v) {
         for (int j = 0; j < lines.size(); j++) {
             String line = lines.get(j);
             v.rowStarted(j);

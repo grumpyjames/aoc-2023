@@ -18,7 +18,7 @@ public class Three extends SolutionTemplate<Integer, Integer> {
                 final List<Integer> nope = new ArrayList<>();
                 final List<Integer> partNumbers = new ArrayList<>();
 
-                g.visitRows(new Grid.RowVisitor() {
+                g.visit(new Grid.RowVisitor() {
                     int start = -1;
                     int end = -1;
 
@@ -98,7 +98,7 @@ public class Three extends SolutionTemplate<Integer, Integer> {
             public Integer result() {
                 final Grid g = new Grid(grid);
 
-                g.visitRows(new Grid.RowVisitor() {
+                g.visit(new Grid.RowVisitor() {
                     int start = -1;
                     int end = -1;
 
