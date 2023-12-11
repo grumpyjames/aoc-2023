@@ -3,21 +3,6 @@ package net.digihippo.aoc;
 import java.util.*;
 
 public class Eleven extends GridSolution<Long> {
-    private record PointPair(TwoDPoint first, TwoDPoint second) {
-        private static PointPair ofPair(final TwoDPoint one, final TwoDPoint two) {
-            if (one.x() < two.x()) {
-                return new PointPair(one, two);
-            } else if (two.x() < one.x()) {
-                return new PointPair(two, one);
-            } else if (one.y() < two.y()) {
-                return new PointPair(one, two);
-            } else if (two.y() < one.y()) {
-                return new PointPair(two, one);
-            } else {
-                throw new IllegalStateException("Can't pair a point with itself: " + one);
-            }
-        }
-    }
 
     private static Long doThing(Grid g, long expansionFactor) {
         List<Integer> columnIndexes = g.findEmptyColumns('.');
@@ -36,20 +21,20 @@ public class Eleven extends GridSolution<Long> {
                     PointPair p = PointPair.ofPair(galaxy, other);
                     if (!distances.containsKey(p)) {
                         long distance = 0L;
-                        distance += Math.abs(p.first.x() - p.second.x());
-                        distance += Math.abs(p.first.y() - p.second.y());
+                        distance += Math.abs(p.first().x() - p.second().x());
+                        distance += Math.abs(p.first().y() - p.second().y());
 
                         // now account for expansion
-                        final int xStart = Math.min(p.first.x(), p.second.x());
-                        final int xEnd = Math.max(p.first.x(), p.second.x());
+                        final int xStart = Math.min(p.first().x(), p.second().x());
+                        final int xEnd = Math.max(p.first().x(), p.second().x());
                         for (int k = xStart; k < xEnd; k++) {
                             if (columnIndexes.contains(k)) {
                                 distance += expansionFactor;
                             }
                         }
 
-                        final int yStart = Math.min(p.first.y(), p.second.y());
-                        final int yEnd = Math.max(p.first.y(), p.second.y());
+                        final int yStart = Math.min(p.first().y(), p.second().y());
+                        final int yEnd = Math.max(p.first().y(), p.second().y());
                         for (int k = yStart; k < yEnd; k++) {
                             if (rowIndexes.contains(k)) {
                                 distance += expansionFactor;

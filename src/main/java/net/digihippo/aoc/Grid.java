@@ -57,6 +57,29 @@ public class Grid {
         return result;
     }
 
+    public char at(int x, int y) {
+        return lines.get(y).charAt(x);
+    }
+
+    public void visitBoundary(Visitor visitor) {
+        String top = lines.get(0);
+        for (int i = 0; i < top.length(); i++) {
+             visitor.onCell(i, 0, top.charAt(i));
+        }
+
+        for (int i = 1; i <= lines.size() - 2; i++) {
+            String row = lines.get(i);
+
+            visitor.onCell(0, i, row.charAt(0));
+            visitor.onCell(row.length() - 1, i, row.charAt(row.length() - 1));
+        }
+
+        String bottom = lines.get(lines.size() - 1);
+        for (int i = 0; i < bottom.length(); i++) {
+            visitor.onCell(i, lines.size() - 1, bottom.charAt(i));
+        }
+    }
+
     interface CharPredicate
     {
         boolean matches(char c);
@@ -98,6 +121,38 @@ public class Grid {
     public interface Visitor
     {
         void onCell(int x, int y, char content);
+    }
+
+    public interface OrthogonalVisitor
+    {
+        void onCell(Offset o, int x, int y, char content);
+    }
+
+    enum Offset
+    {
+        Up(0, -1),
+        Down(0, 1),
+        Left(-1, 0),
+        Right(1, 0);
+
+        private final int xOff;
+        private final int yOff;
+
+        Offset(int xOff, int yOff) {
+            this.xOff = xOff;
+            this.yOff = yOff;
+        }
+    }
+
+    void visitOrthogonalNeighboursOf(int x, int y, OrthogonalVisitor v) {
+        for (Offset value : Offset.values()) {
+            int probeX = x + value.xOff;
+            int probeY = y + value.yOff;
+
+            if (contains(probeX, probeY)) {
+                v.onCell(value, probeX, probeY, lines.get(probeY).charAt(probeX));
+            }
+        }
     }
 
     void visitNeighboursOf(int x, int y, Visitor v) {
