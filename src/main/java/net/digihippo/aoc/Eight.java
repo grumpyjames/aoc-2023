@@ -99,44 +99,7 @@ public class Eight extends SolutionTemplate<Integer, Long> {
                     periods.add(steps);
                 }
 
-                Prime prime = new Prime();
-                Map<Integer, Integer> commonFactors = null;
-                List<Map<Integer, Integer>> allFactors = new ArrayList<>();
-
-                for (Integer period : periods) {
-                    Map<Integer, Integer> factorize = prime.factorize(period);
-                    if (commonFactors == null) {
-                        commonFactors = new HashMap<>(factorize);
-                    } else {
-                        Iterator<Map.Entry<Integer, Integer>> iterator = commonFactors.entrySet().iterator();
-                        while (iterator.hasNext()) {
-                            Map.Entry<Integer, Integer> entry = iterator.next();
-                            boolean commonFactor = factorize.containsKey(entry.getKey());
-                            if (commonFactor) {
-                                entry.setValue(Math.min(entry.getValue(), factorize.get(entry.getKey())));
-                            } else {
-                                iterator.remove();
-                            }
-                        }
-                    }
-
-                    allFactors.add(factorize);
-                }
-
-                long product = 1;
-                for (Map<Integer, Integer> allFactor : allFactors) {
-                    for (Map.Entry<Integer, Integer> entry : allFactor.entrySet()) {
-                        int power = entry.getValue() - commonFactors.getOrDefault(entry.getKey(), 0);
-                        product *= (Math.pow(entry.getKey(), power));
-                    }
-                }
-
-                assert commonFactors != null;
-                for (Map.Entry<Integer, Integer> entry : commonFactors.entrySet()) {
-                    product *= (Math.pow(entry.getKey(), entry.getValue()));
-                }
-
-                return product;
+                return Prime.lowestCommonMultiple(periods);
             }
 
             private final Pattern p = Pattern.compile("([A-Z|1-9]+) = \\(([A-Z|1-9]+), ([A-Z|1-9]+)\\)");
