@@ -14,7 +14,7 @@ class FourteenTest extends TestTemplate<Integer, Integer> {
             #OO..#....""";
 
     FourteenTest() {
-        super(new Fourteen(), EXAMPLE_INPUT, 136, 125, "fourteen.txt");
+        super(new Fourteen(), EXAMPLE_INPUT, 136, 64, "fourteen.txt");
     }
 
 }

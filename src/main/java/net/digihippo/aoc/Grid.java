@@ -102,6 +102,11 @@ public class Grid {
         lines.get(y)[x] = c;
     }
 
+    public Grid copy() {
+        // crude, but effective
+        return new Grid(lines.stream().map(String::new).toList());
+    }
+
     interface CharPredicate
     {
         boolean matches(char c);
@@ -147,6 +152,7 @@ public class Grid {
         for (char[] line : lines) {
             out.println(new String(line));
         }
+        out.println();
     }
 
     public void swap(int x, int y, char one, char other) {
@@ -182,6 +188,7 @@ public class Grid {
         });
     }
 
+    // this visits rows from top to bottom and columns from left to right
     void visit(RowVisitor v) {
         for (int j = 0; j < lines.size(); j++) {
             char[] line = lines.get(j);
@@ -254,5 +261,30 @@ public class Grid {
                 }
             }
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Grid grid = (Grid) o;
+        if (grid.lines.size() != lines.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < lines.size(); i++) {
+            char[] line = lines.get(i);
+            char[] theirs = grid.lines.get(i);
+            if (!Arrays.equals(line, theirs)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(lines);
     }
 }
