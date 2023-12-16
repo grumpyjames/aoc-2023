@@ -98,6 +98,10 @@ public class Grid {
         throw new IllegalStateException();
     }
 
+    public void set(int x, int y, char c) {
+        lines.get(y)[x] = c;
+    }
+
     interface CharPredicate
     {
         boolean matches(char c);
