@@ -1,14 +1,31 @@
 package net.digihippo.aoc;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 public class Thirteen extends SolutionTemplate<Integer, Integer> {
-    static int score(Grid g, Function<Grid, Integer> boundaries, EqualityChecker ec, Function<Integer, Integer> scorer) {
+    enum Type {
+        Row,
+        Column
+    }
+
+    record Reflection(Type t, int location) {
+        public int score() {
+            if (t == Type.Column) {
+                return location;
+            } else {
+                return location * 100;
+            }
+        }
+    }
+
+    static List<Reflection> score(Grid g, Function<Grid, Integer> boundaries, EqualityChecker ec, Type type) {
+        final List<Reflection> result = new ArrayList<>();
         int width = boundaries.apply(g);
         int bound = width - 1;
-        int score = 0;
         for (int i = 0; i < bound; i++) {
             boolean reflection = true;
             int smallerSide = Math.min(i, bound - (i + 1));
@@ -19,27 +36,32 @@ public class Thirteen extends SolutionTemplate<Integer, Integer> {
                 }
             }
             if (reflection) {
-                score += scorer.apply(i + 1);
-            } else {
-                score += 0;
+                result.add(new Reflection(type, i + 1));
             }
         }
 
-        return score;
+        return result;
     }
 
 
     static int score(Grid grid) {
-        int columnScore = score(grid, Grid::columnCount, Grid::equalColumns, Function.identity());
-        int rowScore = score(grid, Grid::rowCount, Grid::equalRows, s -> s * 100);
+        final List<Reflection> reflections = computeReflections(grid);
 
-        return rowScore + columnScore;
+        return reflections.stream().mapToInt(Reflection::score).sum();
+    }
+
+    private static List<Reflection> computeReflections(Grid grid) {
+        final List<Reflection> reflections = new ArrayList<>();
+
+        reflections.addAll(score(grid, Grid::columnCount, Grid::equalColumns, Type.Column));
+        reflections.addAll(score(grid, Grid::rowCount, Grid::equalRows, Type.Row));
+        return reflections;
     }
 
 
     @Override
     Solution<Integer> partOne() {
-        return new Solution<Integer>() {
+        return new Solution<>() {
             private final List<String> builder = new ArrayList<>();
             final List<Grid> g = new ArrayList<>();
 
@@ -81,7 +103,59 @@ public class Thirteen extends SolutionTemplate<Integer, Integer> {
 
     @Override
     Solution<Integer> partTwo() {
-        return null;
+        return new Solution<>() {
+            @Override
+            public Integer result() {
+                int summary = 0;
+                for (Grid grid : grids) {
+                    summary += smudgeScore(grid);
+                }
+
+                return summary;
+            }
+
+            private final List<String> builder = new ArrayList<>();
+            final List<Grid> grids = new ArrayList<>();
+
+            @Override
+            public void accept(String s) {
+                if (s.isBlank()) {
+                    grids.add(new Grid(new ArrayList<>(builder)));
+                    builder.clear();
+                } else {
+                    builder.add(s);
+                }
+            }
+
+            @Override
+            public void processingComplete() {
+                grids.add(new Grid(new ArrayList<>(builder)));
+            }
+        };
+    }
+
+    static int smudgeScore(Grid grid) {
+        Set<Reflection> originalScore = new HashSet<>(computeReflections(grid));
+
+        for (int x = 0; x < grid.columnCount(); x++) {
+            for (int y = 0; y < grid.rowCount(); y++) {
+                try {
+                    grid.swap(x, y, '.', '#');
+                    Set<Reflection> newScore = new HashSet<>(computeReflections(grid));
+                    if (!newScore.equals(originalScore) && !newScore.isEmpty()) {
+                        for (Reflection reflection : originalScore) {
+                            newScore.remove(reflection);
+                        }
+
+                        return newScore.stream().mapToInt(Reflection::score).sum();
+                    }
+                } finally {
+                    grid.swap(x, y, '.', '#');
+                }
+            }
+        }
+
+        throw new IllegalStateException("No smudge found");
     }
 
     public interface EqualityChecker {

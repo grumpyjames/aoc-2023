@@ -1,38 +1,40 @@
 package net.digihippo.aoc;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.*;
 
 public class Grid {
-    private final List<String> lines;
+    private final List<char[]> lines;
 
     public Grid(List<String> lines) {
-        this.lines = lines;
+        this.lines = lines.stream().map(String::toCharArray).toList();
     }
 
     public static Grid fromString(String str) {
-        final List<String> lines = new ArrayList<>();
         String[] split = str.split("\n");
-        Collections.addAll(lines, split);
+        final List<String> lines = new ArrayList<>(Arrays.asList(split));
 
         return new Grid(lines);
     }
 
     boolean contains(int x, int y) {
-        return 0 <= x && x < lines.getFirst().length() && 0 <= y && y < lines.size();
+        return 0 <= x && x < lines.getFirst().length && 0 <= y && y < lines.size();
     }
 
     public String substring(int xStart, int xEndExclusive, int y) {
-        return lines.get(y).substring(xStart, xEndExclusive);
+        return new String(lines.get(y), xStart, xEndExclusive - xStart);
     }
 
     public List<Integer> findEmptyColumns(char emptyChar) {
         final List<Integer> result = new ArrayList<>();
 
-        for (int i = 0; i < lines.getFirst().length(); i++) {
+        for (int i = 0; i < lines.getFirst().length; i++) {
             boolean empty = true;
-            for (String line : lines) {
-                if (line.charAt(i) != emptyChar) {
+            for (char[] line : lines) {
+                if (line[i] != emptyChar) {
                     empty = false;
                     break;
                 }
@@ -49,10 +51,10 @@ public class Grid {
         final List<Integer> result = new ArrayList<>();
 
         for (int j = 0; j < lines.size(); j++) {
-            String line = lines.get(j);
+            char[] line = lines.get(j);
             boolean empty = true;
-            for (int i = 0; i < lines.getFirst().length(); i++) {
-                if (line.charAt(i) != emptyChar) {
+            for (int i = 0; i < lines.getFirst().length; i++) {
+                if (line[i] != emptyChar) {
                     empty = false;
                     break;
                 }
@@ -66,26 +68,7 @@ public class Grid {
     }
 
     public char at(int x, int y) {
-        return lines.get(y).charAt(x);
-    }
-
-    public void visitBoundary(Visitor visitor) {
-        String top = lines.getFirst();
-        for (int i = 0; i < top.length(); i++) {
-             visitor.onCell(i, 0, top.charAt(i));
-        }
-
-        for (int i = 1; i <= lines.size() - 2; i++) {
-            String row = lines.get(i);
-
-            visitor.onCell(0, i, row.charAt(0));
-            visitor.onCell(row.length() - 1, i, row.charAt(row.length() - 1));
-        }
-
-        String bottom = lines.getLast();
-        for (int i = 0; i < bottom.length(); i++) {
-            visitor.onCell(i, lines.size() - 1, bottom.charAt(i));
-        }
+        return lines.get(y)[x];
     }
 
     Set<TwoDPoint> vertexSet() {
@@ -104,12 +87,12 @@ public class Grid {
         boolean matches(char c);
     }
 
-    public List<TwoDPoint> find(CharPredicate charPredicate) {
+    List<TwoDPoint> find(CharPredicate charPredicate) {
         final List<TwoDPoint> result = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
-            String line = lines.get(i);
-            for (int j = 0; j < line.length(); j++) {
-                if (charPredicate.matches(line.charAt(j))) {
+            char[] line = lines.get(i);
+            for (int j = 0; j < line.length; j++) {
+                if (charPredicate.matches(line[j])) {
                     result.add(new TwoDPoint(j, i));
                 }
             }
@@ -119,12 +102,12 @@ public class Grid {
     }
 
     public int columnCount() {
-        return lines.getFirst().length();
+        return lines.getFirst().length;
     }
 
     public boolean equalColumns(int i, int j) {
-        for (String line : lines) {
-            if (line.charAt(i) != line.charAt(j)) {
+        for (char[] line : lines) {
+            if (line[i] != line[j]) {
                 return false;
             }
         }
@@ -137,12 +120,20 @@ public class Grid {
     }
 
     public boolean equalRows(int i, int j) {
-        return lines.get(i).equals(lines.get(j));
+        return Arrays.equals(lines.get(i), lines.get(j));
     }
 
     public void printTo(PrintStream out) {
-        for (String line : lines) {
-            out.println(line);
+        for (char[] line : lines) {
+            out.println(new String(line));
+        }
+    }
+
+    public void swap(int x, int y, char one, char other) {
+        if (lines.get(y)[x] == one) {
+            lines.get(y)[x] = other;
+        } else {
+            lines.get(y)[x] = one;
         }
     }
 
@@ -173,11 +164,11 @@ public class Grid {
 
     void visit(RowVisitor v) {
         for (int j = 0; j < lines.size(); j++) {
-            String line = lines.get(j);
+            char[] line = lines.get(j);
             v.rowStarted(j);
 
-            for (int i = 0; i < line.length(); i++) {
-                v.onCell(i, j, line.charAt(i));
+            for (int i = 0; i < line.length; i++) {
+                v.onCell(i, j, line[i]);
             }
 
             v.rowDone(j);
@@ -189,7 +180,7 @@ public class Grid {
         void onCell(int x, int y, char content);
     }
 
-    public interface OrthogonalVisitor
+    interface OrthogonalVisitor
     {
         void onCell(Offset o, int x, int y, char content);
     }
@@ -216,13 +207,9 @@ public class Grid {
             int probeY = y + value.yOff;
 
             if (contains(probeX, probeY)) {
-                v.onCell(value, probeX, probeY, lines.get(probeY).charAt(probeX));
+                v.onCell(value, probeX, probeY, lines.get(probeY)[probeX]);
             }
         }
-    }
-
-    void visitNeighboursOf(int x, int y, Visitor v) {
-        visitNeighboursOfXRange(x, x, y, v);
     }
 
     void visitNeighboursOfXRange(int xMin, int xMax, int y, Visitor v) {
@@ -230,7 +217,7 @@ public class Grid {
             for (int yOff = -1; yOff <= 1; yOff++) {
                 int probeY = y + yOff;
                 if (contains(probeX, probeY)) {
-                    v.onCell(probeX, probeY, lines.get(probeY).charAt(probeX));
+                    v.onCell(probeX, probeY, lines.get(probeY)[probeX]);
                 }
             }
         }
