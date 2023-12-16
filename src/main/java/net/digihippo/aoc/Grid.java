@@ -1,9 +1,7 @@
 package net.digihippo.aoc;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.PrintStream;
+import java.util.*;
 
 public class Grid {
     private final List<String> lines;
@@ -12,8 +10,16 @@ public class Grid {
         this.lines = lines;
     }
 
+    public static Grid fromString(String str) {
+        final List<String> lines = new ArrayList<>();
+        String[] split = str.split("\n");
+        Collections.addAll(lines, split);
+
+        return new Grid(lines);
+    }
+
     boolean contains(int x, int y) {
-        return 0 <= x && x < lines.get(0).length() && 0 <= y && y < lines.size();
+        return 0 <= x && x < lines.getFirst().length() && 0 <= y && y < lines.size();
     }
 
     public String substring(int xStart, int xEndExclusive, int y) {
@@ -23,7 +29,7 @@ public class Grid {
     public List<Integer> findEmptyColumns(char emptyChar) {
         final List<Integer> result = new ArrayList<>();
 
-        for (int i = 0; i < lines.get(0).length(); i++) {
+        for (int i = 0; i < lines.getFirst().length(); i++) {
             boolean empty = true;
             for (String line : lines) {
                 if (line.charAt(i) != emptyChar) {
@@ -45,7 +51,7 @@ public class Grid {
         for (int j = 0; j < lines.size(); j++) {
             String line = lines.get(j);
             boolean empty = true;
-            for (int i = 0; i < lines.get(0).length(); i++) {
+            for (int i = 0; i < lines.getFirst().length(); i++) {
                 if (line.charAt(i) != emptyChar) {
                     empty = false;
                     break;
@@ -64,7 +70,7 @@ public class Grid {
     }
 
     public void visitBoundary(Visitor visitor) {
-        String top = lines.get(0);
+        String top = lines.getFirst();
         for (int i = 0; i < top.length(); i++) {
              visitor.onCell(i, 0, top.charAt(i));
         }
@@ -76,7 +82,7 @@ public class Grid {
             visitor.onCell(row.length() - 1, i, row.charAt(row.length() - 1));
         }
 
-        String bottom = lines.get(lines.size() - 1);
+        String bottom = lines.getLast();
         for (int i = 0; i < bottom.length(); i++) {
             visitor.onCell(i, lines.size() - 1, bottom.charAt(i));
         }
@@ -110,6 +116,34 @@ public class Grid {
         }
 
         return result;
+    }
+
+    public int columnCount() {
+        return lines.getFirst().length();
+    }
+
+    public boolean equalColumns(int i, int j) {
+        for (String line : lines) {
+            if (line.charAt(i) != line.charAt(j)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public int rowCount() {
+        return lines.size();
+    }
+
+    public boolean equalRows(int i, int j) {
+        return lines.get(i).equals(lines.get(j));
+    }
+
+    public void printTo(PrintStream out) {
+        for (String line : lines) {
+            out.println(line);
+        }
     }
 
     interface RowVisitor extends Visitor

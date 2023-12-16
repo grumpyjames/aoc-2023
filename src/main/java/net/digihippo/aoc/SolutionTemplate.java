@@ -8,6 +8,8 @@ public abstract class SolutionTemplate<T1, T2> {
     interface Solution<X> extends Consumer<String>
     {
         X result();
+
+        default void processingComplete() {}
     }
 
     abstract Solution<T1> partOne();
@@ -38,6 +40,7 @@ public abstract class SolutionTemplate<T1, T2> {
         for (String line : lines) {
             s.accept(line);
         }
+        s.processingComplete();
         return s.result();
     }
 
@@ -47,6 +50,7 @@ public abstract class SolutionTemplate<T1, T2> {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        s.processingComplete();
 
         return s.result();
     }
