@@ -102,11 +102,6 @@ public class Grid {
         lines.get(y)[x] = c;
     }
 
-    public Grid copy() {
-        // crude, but effective
-        return new Grid(lines.stream().map(String::new).toList());
-    }
-
     interface CharPredicate
     {
         boolean matches(char c);
