@@ -3,44 +3,21 @@ package net.digihippo.aoc;
 import java.util.*;
 
 public class Seventeen extends GridSolution<Integer> {
-    private record Buffer(Grid.Offset last, Grid.Offset secondLast, Grid.Offset thirdLast) {
+    record Thing(TwoDPoint twoDPoint, Grid.Offset offset, int count) {
         public boolean allows(Grid.Offset o) {
-            if (last != null && last.oppositeOf(o)) {
-                return false;
+            if (count < 3) {
+                return !o.oppositeOf(offset);
+            } else {
+                return o != offset;
             }
-
-            return moo(o, last) || moo(o, secondLast) || moo(o, thirdLast);
-        }
-
-        private boolean moo(Grid.Offset o1, Grid.Offset o2) {
-            return o2 == null || o2 != o1;
-        }
-
-        public Buffer add(Grid.Offset o) {
-            return new Buffer(o, last, secondLast);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Buffer buffer = (Buffer) o;
-            return last == buffer.last && secondLast == buffer.secondLast && thirdLast == buffer.thirdLast;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(last, secondLast, thirdLast);
-        }
-    }
-
-    record Thing(TwoDPoint twoDPoint, Buffer b) {
-        public boolean allows(Grid.Offset o) {
-            return b.allows(o);
         }
 
         public Thing travelTo(TwoDPoint dest, Grid.Offset o) {
-            return new Thing(dest, b.add(o));
+            if (o != offset) {
+                return new Thing(dest, o, 1);
+            } else {
+                return new Thing(dest, o, count + 1);
+            }
         }
     }
 
@@ -102,7 +79,7 @@ public class Seventeen extends GridSolution<Integer> {
         final Map<Thing, Integer> minDistances = new HashMap<>();
 
         TwoDPoint origin = new TwoDPoint(0, 0);
-        Thing thing = new Thing(origin, new Buffer(null, null, null));
+        Thing thing = new Thing(origin, null, 0);
         minDistances.put(thing, 0);
 
         final Queue<Thing> points = new ArrayDeque<>();
