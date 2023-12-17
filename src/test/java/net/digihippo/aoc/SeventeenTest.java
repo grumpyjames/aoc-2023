@@ -17,6 +17,6 @@ public class SeventeenTest extends TestTemplate<Integer, Integer> {
             4322674655533""";
 
     SeventeenTest() {
-        super(new Seventeen(), EXAMPLE_INPUT, 102, 71, "seventeen.txt");
+        super(new Seventeen(), EXAMPLE_INPUT, 102, 94, "seventeen.txt");
     }
 }
