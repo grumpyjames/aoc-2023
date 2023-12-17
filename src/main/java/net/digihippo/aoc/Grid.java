@@ -209,10 +209,30 @@ public class Grid {
 
     enum Offset
     {
-        Up(0, -1),
-        Down(0, 1),
-        Left(-1, 0),
-        Right(1, 0);
+        Up(0, -1) {
+            @Override
+            public boolean oppositeOf(Offset o) {
+                return o == Down;
+            }
+        },
+        Down(0, 1) {
+            @Override
+            public boolean oppositeOf(Offset o) {
+                return o == Up;
+            }
+        },
+        Left(-1, 0) {
+            @Override
+            public boolean oppositeOf(Offset o) {
+                return o == Right;
+            }
+        },
+        Right(1, 0) {
+            @Override
+            public boolean oppositeOf(Offset o) {
+                return o == Left;
+            }
+        };
 
         private final int xOff;
         private final int yOff;
@@ -221,6 +241,8 @@ public class Grid {
             this.xOff = xOff;
             this.yOff = yOff;
         }
+
+        public abstract boolean oppositeOf(Offset o);
     }
 
     void visitOrthogonalNeighboursOf(int x, int y, OrthogonalVisitor v) {
