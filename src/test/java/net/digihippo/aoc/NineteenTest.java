@@ -1,6 +1,6 @@
 package net.digihippo.aoc;
 
-class NineteenTest extends TestTemplate<Integer, Integer> {
+class NineteenTest extends TestTemplate<Integer, Long> {
     private static final String EXAMPLE_INPUT = """
             px{a<2006:qkq,m>2090:A,rfg}
             pv{a>1716:R,A}
@@ -21,6 +21,6 @@ class NineteenTest extends TestTemplate<Integer, Integer> {
             {x=2127,m=1623,a=2188,s=1013}""";
 
     NineteenTest() {
-        super(new Nineteen(), EXAMPLE_INPUT, 19114, 12, "nineteen.txt");
+        super(new Nineteen(), EXAMPLE_INPUT, 19114, 167409079868000L, "nineteen.txt");
     }
 }
