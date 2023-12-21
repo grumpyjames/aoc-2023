@@ -82,6 +82,22 @@ public class Grid {
         return vertices;
     }
 
+    public TwoDPoint replaceOnce(char needle, char replacement) {
+        for (int j = 0; j < lines.size(); j++) {
+            char[] line = lines.get(j);
+
+            for (int i = 0; i < line.length; i++) {
+                char content = line[i];
+                if (content == needle) {
+                    line[i] = replacement;
+                    return new TwoDPoint(i, j);
+                }
+            }
+        }
+
+        throw new IllegalStateException();
+    }
+
     interface CharPredicate
     {
         boolean matches(char c);
@@ -211,6 +227,19 @@ public class Grid {
             }
         }
     }
+
+    void visitOrthogonalRepeatedNeighboursOf(int x, int y, OrthogonalVisitor v) {
+        for (Offset value : Offset.values()) {
+            int probeX = x + value.xOff;
+            int probeY = y + value.yOff;
+
+            int modX = ((probeX % columnCount()) + columnCount()) % columnCount();
+            int modY = ((probeY % rowCount()) + rowCount()) % rowCount();
+
+            v.onCell(value, probeX, probeY, lines.get(modY)[modX]);
+        }
+    }
+
 
     void visitNeighboursOfXRange(int xMin, int xMax, int y, Visitor v) {
         for (int probeX = xMin - 1; probeX <= xMax + 1; probeX++) {
