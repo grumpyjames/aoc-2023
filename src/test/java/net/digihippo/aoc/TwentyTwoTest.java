@@ -1,7 +1,5 @@
 package net.digihippo.aoc;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class TwentyTwoTest extends CommonParserTestTemplate<Integer, TwentyTwo.Brick> {
 
     private static final String EXAMPLE_INPUT = """
@@ -15,6 +13,6 @@ class TwentyTwoTest extends CommonParserTestTemplate<Integer, TwentyTwo.Brick> {
             """;
 
     protected TwentyTwoTest() {
-        super(new TwentyTwo(), EXAMPLE_INPUT, 5, 5, "twentytwo.txt");
+        super(new TwentyTwo(), EXAMPLE_INPUT, 5, 7, "twentytwo.txt");
     }
 }
