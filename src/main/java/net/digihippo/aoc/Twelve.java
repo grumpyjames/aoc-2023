@@ -2,7 +2,6 @@ package net.digihippo.aoc;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Twelve extends CommonParserSolutionTemplate<Long, Twelve.Thing> {
@@ -43,26 +42,32 @@ public class Twelve extends CommonParserSolutionTemplate<Long, Twelve.Thing> {
             }
 
             Thing longer = new Thing(stringBuilder.toString().toCharArray(), groups);
-            result += arrangements(answers, longer.springs, 0, longer.working, 0);
-            System.out.println(j + ": " + Instant.now());
+            long mm = arrangements(answers, longer.springs, 0, longer.working, 0);
+
+            result += mm;
+            System.out.println(j + ": " + Instant.now() + " " + new String(longer.springs) + " " + longer.working + " => " + mm);
         }
 
+        // 405098552693994 : too high.
         return result;
     }
 
     private static final class StateKey
     {
         private final char[] charArray;
-        private final int offset;
-
         private final List<Integer> workingGroups;
-        private final int workingGroupIndex;
 
-        private StateKey(char[] charArray, int offset, List<Integer> workingGroups, int workingGroupIndex) {
-            this.charArray = charArray;
-            this.offset = offset;
-            this.workingGroups = workingGroups;
-            this.workingGroupIndex = workingGroupIndex;
+        private StateKey(
+                char[] ca,
+                int offset,
+                List<Integer> wg,
+                int workingGroupIndex) {
+            this.charArray = new char[ca.length - offset];
+            System.arraycopy(ca, offset, this.charArray, 0, ca.length - offset);
+            this.workingGroups = new ArrayList<>(wg.size() - workingGroupIndex);
+            for (int i = workingGroupIndex; i < wg.size(); i++) {
+                this.workingGroups.add(wg.get(i));
+            }
         }
 
         @Override
@@ -70,12 +75,12 @@ public class Twelve extends CommonParserSolutionTemplate<Long, Twelve.Thing> {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             StateKey stateKey = (StateKey) o;
-            return offset == stateKey.offset && workingGroupIndex == stateKey.workingGroupIndex && Arrays.equals(charArray, stateKey.charArray) && Objects.equals(workingGroups, stateKey.workingGroups);
+            return Arrays.equals(charArray, stateKey.charArray) && workingGroups.equals(stateKey.workingGroups);
         }
 
         @Override
         public int hashCode() {
-            int result = Objects.hash(offset, workingGroups, workingGroupIndex);
+            int result = Objects.hash(workingGroups);
             result = 31 * result + Arrays.hashCode(charArray);
             return result;
         }
@@ -87,19 +92,7 @@ public class Twelve extends CommonParserSolutionTemplate<Long, Twelve.Thing> {
             int charIndex,
             List<Integer> working,
             int workingGroupIndex) {
-        StateKey stateKey = new StateKey(springs, charIndex, working, workingGroupIndex);
-        Long answer = answers.get(stateKey);
-        if (answer != null) {
-            return answer;
-        }
 
-        long oof = actuallyComputeIt(answers, springs, charIndex, working, workingGroupIndex);
-        answers.put(stateKey, oof);
-
-        return oof;
-    }
-
-    private static long actuallyComputeIt(Map<StateKey, Long> answers, char[] springs, int charIndex, List<Integer> working, int workingGroupIndex) {
         if (charIndex >= springs.length) { // no more material to work with
             return workingGroupIndex == working.size() ? 1 : 0;
         }
@@ -117,6 +110,19 @@ public class Twelve extends CommonParserSolutionTemplate<Long, Twelve.Thing> {
             }
         }
 
+        StateKey stateKey = new StateKey(springs, charIndex, working, workingGroupIndex);
+        Long answer = answers.get(stateKey);
+        if (answer != null) {
+            return answer;
+        }
+
+        long oof = actuallyComputeIt(answers, springs, charIndex, working, workingGroupIndex);
+        answers.put(stateKey, oof);
+
+        return oof;
+    }
+
+    private static long actuallyComputeIt(Map<StateKey, Long> answers, char[] springs, int charIndex, List<Integer> working, int workingGroupIndex) {
         char c = springs[charIndex];
         if (c == '.') {
             return arrangements(answers, springs, charIndex + 1, working, workingGroupIndex);
@@ -126,7 +132,8 @@ public class Twelve extends CommonParserSolutionTemplate<Long, Twelve.Thing> {
             Integer groupSize = working.get(workingGroupIndex);
             boolean ok = true;
             for (int i = charIndex; i < charIndex + groupSize; i++) {
-                if (charEquals(springs, '.', i)) {
+                boolean good = charEquals(springs, '#', i) || charEquals(springs, '?', i);
+                if (!good) {
                     ok = false;
                     break;
                 }
@@ -138,7 +145,7 @@ public class Twelve extends CommonParserSolutionTemplate<Long, Twelve.Thing> {
                 return arrangements(
                         answers,
                         springs,
-                        charIndex + groupSize + 1,
+                        charIndex + groupSize + 1, // skip over the ?|.
                         working,
                         workingGroupIndex + 1);
             } else {
@@ -166,82 +173,7 @@ public class Twelve extends CommonParserSolutionTemplate<Long, Twelve.Thing> {
         return result;
     }
 
-    private static final class MutableCharSequence implements CharSequence
-    {
-        private char[] array;
-
-
-        void set(char[] array) {
-            this.array = array;
-        }
-
-        @Override
-        public int length() {
-            return array.length;
-        }
-
-        @Override
-        public char charAt(int index) {
-            return array[index];
-        }
-
-        @Override
-        public CharSequence subSequence(int start, int end) {
-            throw new UnsupportedOperationException();
-        }
-    }
-
     record Thing(char[] springs, List<Integer> working) {
-        public long ways() {
-
-            long result = 0;
-
-            final String regex = regexStr(working);
-
-            final Pattern p = Pattern.compile(regex);
-            final List<Integer> unknown = new ArrayList<>();
-            for (int i = 0; i < springs.length; i++) {
-                char spring = springs[i];
-                if (spring == '?') {
-                    unknown.add(i);
-                }
-            }
-
-            int combinations = 1 << unknown.size();
-            final MutableCharSequence mcs = new MutableCharSequence();
-            mcs.set(springs);
-            for (int i = 0; i < combinations; i++) {
-                // treat i as a bitmask
-                for (int j = 0; j < unknown.size(); j++) {
-                    char s = (i & 1 << j) > 0 ? '#' : '.';
-                    springs[unknown.get(j)] = s;
-                }
-
-                boolean matches = p.matcher(mcs).matches();
-                if (matches) {
-                    result++;
-                }
-            }
-
-            return result;
-        }
-
-        private String regexStr(List<Integer> working) {
-            final StringBuilder sb = new StringBuilder();
-
-            sb.append("\\.*");
-
-
-            for (int count : working) {
-                sb.append("#".repeat(Math.max(0, count)));
-                sb.append("[\\.]+");
-            }
-
-            sb.delete(sb.length() - 5, sb.length());
-            sb.append("\\.*");
-
-            return sb.toString();
-        }
 
     }
 }
