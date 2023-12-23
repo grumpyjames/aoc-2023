@@ -23,4 +23,8 @@ public record TwoDPoint(int x, int y) {
                 new TwoDPoint(x, y - 1)
         );
     }
+
+    public int manhattanDistance(TwoDPoint other) {
+        return Math.abs(other.x - x) + Math.abs(other.y - y);
+    }
 }

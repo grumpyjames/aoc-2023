@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Grid {
     private final List<char[]> lines;
@@ -100,6 +101,20 @@ public class Grid {
 
     public void set(int x, int y, char c) {
         lines.get(y)[x] = c;
+    }
+
+    public int count(CharPredicate cp) {
+        final AtomicInteger ai = new AtomicInteger();
+        visit(new Visitor() {
+            @Override
+            public void onCell(int x, int y, char content) {
+                if (cp.matches(content)) {
+                    ai.incrementAndGet();
+                }
+            }
+        });
+
+        return ai.get();
     }
 
     interface CharPredicate

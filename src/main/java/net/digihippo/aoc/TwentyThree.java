@@ -6,7 +6,7 @@ public class TwentyThree extends GridSolution<Integer> {
 
     private static final class PathSoFar
     {
-        private final List<TwoDPoint> path = new ArrayList<>();
+        private TwoDPoint head = null;
         private final Set<TwoDPoint> visited = new HashSet<>();
         private final int maxY;
         private boolean chance = true;
@@ -17,7 +17,7 @@ public class TwentyThree extends GridSolution<Integer> {
         }
 
         void append(TwoDPoint point) {
-            path.add(point);
+            head = point;
             visited.add(point);
             if (point.y() == maxY) {
                 complete = true;
@@ -29,7 +29,7 @@ public class TwentyThree extends GridSolution<Integer> {
         }
 
         public TwoDPoint last() {
-            return path.getLast();
+            return head;
         }
 
         public boolean hasVisited(TwoDPoint neighbour) {
@@ -43,19 +43,19 @@ public class TwentyThree extends GridSolution<Integer> {
         public PathSoFar copy() {
             PathSoFar pathSoFar = new PathSoFar(maxY);
 
-            pathSoFar.path.addAll(this.path);
+            pathSoFar.head = this.head;
             pathSoFar.visited.addAll(this.visited);
 
             return pathSoFar;
         }
 
         public int length() {
-            return path.size();
+            return this.visited.size();
         }
 
         @Override
         public String toString() {
-            return System.identityHashCode(this) + " : len " + path.size() + " @ " + path.getLast();
+            return System.identityHashCode(this) + " : len " + length() + " @ " + head;
         }
 
         public boolean worthContinuing() {
@@ -65,13 +65,17 @@ public class TwentyThree extends GridSolution<Integer> {
 
     @Override
     Integer partOne(Grid g) {
-        return longestHike(g, (here, x, y, o, content) -> acceptable(o, content));
+        return longestHike(g, (len, here, x, y, o, content) -> acceptable(o, content));
     }
 
     @Override
     Integer partTwo(Grid g) {
+        final int accessible = g.count(c -> c != '#');
+
+        final TwoDPoint finish = new TwoDPoint(g.columnCount() - 2, g.rowCount() - 1);
+
         TwoDPoint prev = null;
-        TwoDPoint point = new TwoDPoint(g.columnCount() - 2, g.rowCount() - 1);
+        TwoDPoint point = finish;
         // track back until we find the first split.
         final Set<TwoDPoint> visited = new HashSet<>();
         final List<TwoDPoint> points = new ArrayList<>();
@@ -95,7 +99,12 @@ public class TwentyThree extends GridSolution<Integer> {
 
         final TwoDPoint decisionPoint = point;
         final TwoDPoint pathToSuccess = prev;
-        return longestHike(g, (here, x, y, o, content) -> {
+        return longestHike(g, (visitedSize, here, x, y, o, content) -> {
+            if (accessible - visitedSize < finish.manhattanDistance(here)) {
+                return false;
+            }
+
+
             boolean atDecisionPoint = decisionPoint.x() == here.x() && decisionPoint.y() == here.y();
             if (atDecisionPoint) {
                 return pathToSuccess.x() == x && pathToSuccess.y() == y;
@@ -106,7 +115,13 @@ public class TwentyThree extends GridSolution<Integer> {
     }
 
     interface Worthy {
-        boolean worthy(TwoDPoint here, int x, int y, Grid.Offset o, char content);
+        boolean worthy(
+                int visitedSize,
+                TwoDPoint here,
+                int x,
+                int y,
+                Grid.Offset o,
+                char content);
     }
 
     private static int longestHike(Grid g, Worthy worthy) {
@@ -119,6 +134,10 @@ public class TwentyThree extends GridSolution<Integer> {
 
         while (paths.stream().anyMatch(PathSoFar::worthContinuing)) {
             final List<PathSoFar> newPaths = new ArrayList<>();
+            if (paths.getFirst().length() % 100 == 0) {
+                System.out.println("Looking at paths of length " + paths.getFirst().length());
+            }
+
             for (Iterator<PathSoFar> iterator = paths.iterator(); iterator.hasNext(); ) {
                 PathSoFar path = iterator.next();
                 if (!path.hasAChance()) {
@@ -133,7 +152,7 @@ public class TwentyThree extends GridSolution<Integer> {
                 g.visitOrthogonalNeighboursOf(here.x(), here.y(), (o, x, y, content) -> {
                     TwoDPoint neighbour = new TwoDPoint(x, y);
                     if (!path.hasVisited(neighbour)) {
-                        if (worthy.worthy(here, x, y, o, content)) {
+                        if (worthy.worthy(path.length(), here, x, y, o, content)) {
                             next.add(neighbour);
                         }
                     }
