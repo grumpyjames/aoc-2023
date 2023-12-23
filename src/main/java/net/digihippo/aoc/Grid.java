@@ -258,6 +258,10 @@ public class Grid {
         }
 
         public abstract boolean oppositeOf(Offset o);
+
+        public TwoDPoint move(TwoDPoint origin, int distance) {
+            return new TwoDPoint(xOff * distance + origin.x(), yOff * distance + origin.y());
+        }
     }
 
     void visitOrthogonalNeighboursOf(int x, int y, OrthogonalVisitor v) {
